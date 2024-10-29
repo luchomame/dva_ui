@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import MapComponent from './MapComponent';
+import { useState } from "react";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "/vite.svg";
+import "./App.css";
+import MapComponent from "./components/MapComponent";
 
 /* Commenting out default shit 
 function App() {
@@ -37,7 +37,6 @@ function App() {
 export default App
 
 */
-
 
 function App() {
   return (
