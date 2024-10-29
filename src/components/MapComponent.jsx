@@ -11,6 +11,8 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet.markercluster";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFilter, faStar } from "@fortawesome/free-solid-svg-icons";
 
 const MapComponent = () => {
   // default position in London
@@ -21,6 +23,7 @@ const MapComponent = () => {
   const [maxDistance, setMaxDistance] = useState(10);
   const [showFilters, setShowFilters] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(13);
+  const [selectedWeather, setSelectedWeather] = useState("All");
 
   // this interacts with SetView component to set zoom level based on max distance
   useEffect(() => {
@@ -49,6 +52,8 @@ const MapComponent = () => {
       new Date(event.startTime).toDateString() !==
         new Date(selectedDate).toDateString()
     )
+      return false;
+    if (selectedWeather !== "All" && event.weather !== selectedWeather)
       return false;
 
     // find haversine distance between current location and event location
@@ -109,7 +114,60 @@ const MapComponent = () => {
   }, [filteredEvents, zoomLevel]);
 
   return (
-    <div style={{ display: "flex", position: "relative" }}>
+    // I don't like this div. dropping the original style here in case I wanna revert
+    // style={{ display: "flex", position: "relative" }}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: showFilters ? "60px 20% auto" : "60px auto", // Sidebar and map width based on showFilters
+        transition: "grid-template-columns 0.3s ease", // Smooth transition for resizing
+        height: "100vh",
+      }}
+    >
+      {/* Sidebar for action buttons */}
+      <div
+        style={{
+          width: "60px",
+          height: "100vh",
+          backgroundColor: "#333",
+          color: "#fff",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          paddingTop: "20px",
+        }}
+      >
+        <button
+          onClick={toggleFilters}
+          className="sidebar-button"
+          style={{
+            background: "none",
+            border: "none",
+            color: "#fff",
+            cursor: "pointer",
+            marginBottom: "20px",
+            marginRight: "10px",
+            marginLeft: "10px",
+            width: "100%",
+          }}
+        >
+          <FontAwesomeIcon icon={faFilter} style={{ fontSize: "24px" }} />
+        </button>
+        <button
+          className="sidebar-button"
+          style={{
+            background: "none",
+            border: "none",
+            color: "#fff",
+            cursor: "pointer",
+            marginBottom: "20px",
+          }}
+        >
+          <FontAwesomeIcon icon={faStar} style={{ fontSize: "24px" }} />
+        </button>
+        {/* Add more buttons here if needed */}
+      </div>
+      {/* Filter controls */}
       <FilterControls
         selectedType={selectedType}
         setSelectedType={setSelectedType}
@@ -120,8 +178,19 @@ const MapComponent = () => {
         clearFilters={clearFilters}
         toggleFilters={toggleFilters}
         showFilters={showFilters}
+        selectedWeather={selectedWeather}
+        setSelectedWeather={setSelectedWeather}
       />
-      <div id="map" style={{ height: "100vh", width: "100%" }}></div>
+      {/* <div id="map" style={{ height: "100vh", width: "100%" }}></div> */}
+      {/* Map container width adjusts based on filter visibility */}
+      <div
+        id="map"
+        style={{
+          flexGrow: 1,
+          width: showFilters ? "80%" : "100%", // Map shrinks to 80% when filter panel is open
+          transition: "width 0.5s ease", // Smooth transition effect
+        }}
+      ></div>
     </div>
   );
 };

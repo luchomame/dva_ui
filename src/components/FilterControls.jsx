@@ -13,9 +13,11 @@ const FilterControls = ({
   clearFilters,
   toggleFilters,
   showFilters,
+  selectedWeather,
+  setSelectedWeather,
 }) => (
   <>
-    <button
+    {/* <button
       onClick={toggleFilters}
       style={{
         position: "absolute",
@@ -34,11 +36,12 @@ const FilterControls = ({
         icon={faFilter}
         style={{ fontSize: "20px", color: "#000" }}
       />
-    </button>
+    </button> */}
 
+    {/*  I don't like that we have to make it 100% to use the grid layout. width used to be 20% in case we wanna revert.*/}
     {showFilters && (
       <div
-        style={{ width: "20%", padding: "10px", backgroundColor: "#808080" }}
+        style={{ width: "100%", padding: "10px", backgroundColor: "#808080" }}
       >
         <h3>Filter Events</h3>
 
@@ -69,6 +72,18 @@ const FilterControls = ({
           <option value="25">25 miles</option>
           <option value="50">50 miles</option>
           <option value="100">100 miles</option>
+        </select>
+
+        <label>Forecasted Weather:</label>
+        <select
+          value={selectedWeather}
+          onChange={(e) => setSelectedWeather(e.target.value)}
+        >
+          <option value="All">All</option>
+          <option value="Sunny">Sunny</option>
+          <option value="Rainy">Rainy</option>
+          <option value="Cloudy">Cloudy</option>
+          <option value="Windy">Windy</option>
         </select>
 
         <button onClick={clearFilters} style={{ marginTop: "10px" }}>
