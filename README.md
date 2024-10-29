@@ -9,7 +9,7 @@ Currently, two official plugins are available:
 
 # Start
 
-To run, run the following
+To start, run the following
 ```
 npm install
 npm run dev
