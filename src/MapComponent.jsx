@@ -1,11 +1,38 @@
 // src/MapComponent.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOMServer from "react-dom/server";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import seedData from "./data/seed.json";
 import L from "leaflet"; // needed for custom icons
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faThumbtack, faFilter } from "@fortawesome/free-solid-svg-icons";
+
+// Haversine formula to calculate distance between two coordinates
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 3958.8; // radius of Earth in kilometers. Use 3958.8 for miles. Use 6371 for km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * // convert to radians
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); // angular distance in radians
+  return R * c; // convert angle to distance
+}
+
+// new component to set view based on zoom level and position. need this AND the useEffect in MapComponent
+// also need to use useMap hook from react-leaflet
+const SetView = ({ zoomLevel, position }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    map.setView(position, zoomLevel); // Update map view when zoomLevel or position changes
+  }, [zoomLevel, position, map]);
+
+  return null;
+};
 
 // use font awesome icon as custom marker for current location
 const currentLocationIcon = L.divIcon({
@@ -35,6 +62,16 @@ const MapComponent = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [maxDistance, setMaxDistance] = useState(10); // in miles or km as preferred
   const [showFilters, setShowFilters] = useState(false); // for filters
+  const [zoomLevel, setZoomLevel] = useState(13); // for zoom level
+
+  // Update zoom level based on maxDistance
+  useEffect(() => {
+    if (maxDistance <= 5) setZoomLevel(15);
+    else if (maxDistance <= 10) setZoomLevel(13);
+    else if (maxDistance <= 25) setZoomLevel(11);
+    else if (maxDistance <= 50) setZoomLevel(9);
+    else setZoomLevel(8); // For 100 miles or more
+  }, [maxDistance]);
 
   // clear filters
   const clearFilters = () => {
@@ -63,8 +100,27 @@ const MapComponent = () => {
       return false;
     }
     // filter by distance (simplified here replace with a distance calculation if needed)
-    return true;
+    // return true;
+    // Filter by distance
+    const distance = calculateDistance(
+      position[0], // User's latitude
+      position[1], // User's longitude
+      event.coordinates[0], // Event latitude
+      event.coordinates[1] // Event longitude
+    );
+    console.log(
+      "Event:",
+      event.eventName,
+      "| Distance:",
+      distance,
+      "| Max Distance:",
+      maxDistance
+    );
+
+    return distance <= maxDistance;
   });
+
+  // console.log("Filtered Events:", filteredEvents); // Log the filtered events to see which ones pass
 
   return (
     <div style={{ display: "flex", position: "relative" }}>
@@ -84,7 +140,10 @@ const MapComponent = () => {
           boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
         }}
       >
-        <FontAwesomeIcon icon={faFilter} style={{ fontSize: "20px" }} />
+        <FontAwesomeIcon
+          icon={faFilter}
+          style={{ fontSize: "20px", color: "#000" }}
+        />
       </button>
       {/* Conditional rendering of filter panel */}
       {showFilters && (
@@ -114,12 +173,22 @@ const MapComponent = () => {
             onChange={(e) => setSelectedDate(e.target.value)}
           />
 
+          {/* WHY IS THIS SHIT NOT WORKING */}
           <label>Max Distance (mi):</label>
-          <input
-            type="number"
+          <select
             value={maxDistance}
-            onChange={(e) => setMaxDistance(e.target.value)}
-          />
+            onChange={(e) => {
+              const distance = Number(e.target.value);
+              setMaxDistance(distance);
+              console.log("Selected maxDistance:", distance); // Log the selected distance
+            }}
+          >
+            <option value="5">5 miles</option>
+            <option value="10">10 miles</option>
+            <option value="25">25 miles</option>
+            <option value="50">50 miles</option>
+            <option value="100">100 miles</option>
+          </select>
 
           {/* Clear Filters Button */}
           <button onClick={clearFilters} style={{ marginTop: "10px" }}>
@@ -131,9 +200,10 @@ const MapComponent = () => {
       {/* Map */}
       <MapContainer
         center={position}
-        zoom={13}
         style={{ height: "100vh", width: "100%" }}
       >
+        <SetView zoomLevel={zoomLevel} position={position} />
+
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
